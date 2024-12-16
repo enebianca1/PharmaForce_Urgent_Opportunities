@@ -12,20 +12,34 @@ public with sharing class UrgentOpportunitiesController {
     ******************************************************************************************************************/
     @AuraEnabled(cacheable=true)
     public static List<Opportunity> getUrgentOpportunities(String searchKey, String accountId, Integer offsetValue, Integer limitValue) {
-        String query = 'SELECT Id, Name, Amount, StageName, CloseDate FROM Opportunity WHERE Urgent__c = true';
+    List<Opportunity> opportunities = new List<Opportunity>();
 
-        // Filtrare după AccountId
+    try {
+        // Construirea query-ului
+        String baseQuery = 'SELECT Id, Name, Amount, StageName, CloseDate FROM Opportunity WHERE Urgent__c = true';
+        
+        // Construirea filtrării după AccountId
         if (!String.isBlank(accountId)) {
-            query += ' AND AccountId = :accountId';
+            baseQuery += ' AND AccountId = :accountId';
         }
 
+        // Adăugarea filtrului de căutare
         if (!String.isBlank(searchKey)) {
-            query += ' AND Name LIKE \'%' + String.escapeSingleQuotes(searchKey) + '%\'';
+            baseQuery += ' AND Name LIKE \'%' + String.escapeSingleQuotes(searchKey) + '%\'';
         }
 
-        query += ' ORDER BY CloseDate ASC LIMIT :limitValue OFFSET :offsetValue';
-        return Database.query(query);
+        baseQuery += ' ORDER BY CloseDate ASC LIMIT :limitValue OFFSET :offsetValue';
+
+        // Executarea query-ului
+        opportunities = Database.query(baseQuery);
+    } catch (Exception ex) {
+        // Loghează eroarea folosind ErrorHandler
+        ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'getUrgentOpportunities');
+        throw new AuraHandledException('Error retrieving urgent opportunities.');
     }
+    return opportunities;
+}
+
 
     /******************************************************************************************************************
 * @author       : Bianca Ene
@@ -38,18 +52,10 @@ public with sharing class UrgentOpportunitiesController {
 * @param        : Date closeDate : The close date of the opportunity.
 * @return       : void
 ******************************************************************************************************************/
-    @AuraEnabled
-    @future
-    public static void createOpportunityAsync(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
-        Opportunity newOpportunity = new Opportunity(
-            AccountId = accountId,
-            Name = name,
-            StageName = stageName,
-            Amount = amount,
-            CloseDate = closeDate,
-            Urgent__c = true
-        );
-        insert newOpportunity;
-    }
+@AuraEnabled
+public static void createOpportunityAsync(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
+    System.enqueueJob(new CreateUrgentOpportunityQueueable(accountId, name, stageName, amount, closeDate));
+}
+
     
 }
