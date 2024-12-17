@@ -11,7 +11,26 @@ export default class UrgentOpportunitiesTable extends LightningElement {
     @track limitValue = 10; // Numărul de înregistrări pe pagină
     @track showModal = false; // Track modal visibility
     @track newOpportunity = {}; // Track new opportunity fields
-
+    @track stageOptions = [
+        { label: 'Prospecting', value: 'Prospecting' },
+        { label: 'Qualification', value: 'Qualification' },
+        { label: 'Need Analysis', value: 'Need Analysis' },
+        { label: 'Value Proposition', value: 'Value Proposition' },
+        { label: 'Id. Decision Maker', value: 'Id. Decision Maker' },
+        { label: 'Perception Analysis', value: 'Perception Analysis' },
+        { label: 'Proposal/Price Quote', value: 'Proposal/Price Quote' },
+        { label: 'Negotiation/Review', value: 'Negotiation/Review' },
+        { label: 'Closed Won', value: 'Closed Won' },
+        { label: 'Closed Lost', value: 'Closed Lost' }
+    ];
+    
+    // valori pt Stage name
+    handleModalInputChange(event) {
+        const field = event.target.name;
+        const value = event.detail.value;
+        this.newOpportunity[field] = value;
+    }
+    
     columns = [
         {
             label: 'Name',
@@ -80,6 +99,19 @@ export default class UrgentOpportunitiesTable extends LightningElement {
     }
 
     saveOpportunity() {
+        // Validăm câmpurile local
+        if (!this.newOpportunity.Name || !this.newOpportunity.StageName || !this.newOpportunity.Amount || !this.newOpportunity.CloseDate) {
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Error',
+                    message: 'All fields are required.',
+                    variant: 'error'
+                })
+            );
+            return;
+        }
+    
+        // Apelăm metoda Apex
         createOpportunityAsync({
             accountId: this.recordId,
             name: this.newOpportunity.Name,
@@ -87,28 +119,29 @@ export default class UrgentOpportunitiesTable extends LightningElement {
             amount: this.newOpportunity.Amount,
             closeDate: this.newOpportunity.CloseDate
         })
-        .then(() => {
-            this.showModal = false;
-            this.fetchOpportunities();
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Success',
-                    message: 'Opportunity created successfully',
-                    variant: 'success'
-                })
-            );
-        })
-        .catch((error) => {
-            console.error(error);
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Error',
-                    message: 'Error creating opportunity',
-                    variant: 'error'
-                })
-            );
-        });
+            .then(() => {
+                this.showModal = false; // Închide modalul
+                this.fetchOpportunities(); // Reîmprospătează tabelul
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Success',
+                        message: 'Opportunity created successfully',
+                        variant: 'success'
+                    })
+                );
+            })
+            .catch((error) => {
+                console.error(error);
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Error',
+                        message: error.body.message || 'Error creating opportunity',
+                        variant: 'error'
+                    })
+                );
+            });
     }
+    
     
 
     closeModal() {

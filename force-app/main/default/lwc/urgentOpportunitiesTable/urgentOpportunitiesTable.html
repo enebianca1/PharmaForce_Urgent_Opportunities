@@ -32,7 +32,14 @@
                 </header>
                 <div class="slds-modal__content slds-p-around_medium">
                     <lightning-input type="text" name="Name" label="Opportunity Name" onchange={handleModalInputChange}></lightning-input>
-                    <lightning-input type="text" name="StageName" label="Stage" onchange={handleModalInputChange}></lightning-input>
+                    <lightning-combobox
+                        name="StageName"
+                        label="Stage"
+                        value={newOpportunity.StageName}
+                        placeholder="Select Stage"
+                        options={stageOptions}
+                        onchange={handleModalInputChange}>
+                    </lightning-combobox>
                     <lightning-input name="Amount" label="Amount" type="number" onchange={handleModalInputChange}></lightning-input>
                     <lightning-input name="CloseDate" label="Close Date" type="date" onchange={handleModalInputChange}></lightning-input>
                 </div>

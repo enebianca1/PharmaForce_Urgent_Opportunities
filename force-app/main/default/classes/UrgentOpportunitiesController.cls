@@ -33,7 +33,6 @@ public with sharing class UrgentOpportunitiesController {
         // Executarea query-ului
         opportunities = Database.query(baseQuery);
     } catch (Exception ex) {
-        // Loghează eroarea folosind ErrorHandler
         ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'getUrgentOpportunities');
         throw new AuraHandledException('Error retrieving urgent opportunities.');
     }
@@ -53,9 +52,17 @@ public with sharing class UrgentOpportunitiesController {
 * @return       : void
 ******************************************************************************************************************/
 @AuraEnabled
-public static void createOpportunityAsync(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
-    System.enqueueJob(new CreateUrgentOpportunityQueueable(accountId, name, stageName, amount, closeDate));
+public static Boolean createOpportunityAsync(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
+    try {
+        System.enqueueJob(new CreateUrgentOpportunityQueueable(accountId, name, stageName, amount, closeDate));
+        return true; 
+    } catch (Exception ex) {
+        // Logăm eroarea fără a trimite feedback negativ către UI
+        ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunityAsync');
+        return false; // Indică o eroare (dar UI nu afișează notificare)
+    }
 }
+
 
     
 }
