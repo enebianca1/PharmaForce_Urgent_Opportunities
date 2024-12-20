@@ -23,6 +23,9 @@ export default class UrgentOpportunitiesTable extends LightningElement {
         { label: 'Closed Won', value: 'Closed Won' },
         { label: 'Closed Lost', value: 'Closed Lost' }
     ];
+    @track totalRecords = 0;
+    @track currentPage = 1; 
+    @track totalPages = 0; 
     
     // valori pt Stage name
     handleModalInputChange(event) {
@@ -50,6 +53,7 @@ export default class UrgentOpportunitiesTable extends LightningElement {
     handleSearch(event) {
         this.searchKey = event.target.value;
         this.offsetValue = 0; // Resetează la prima pagină
+        this.currentPage = 1;
         this.fetchOpportunities();
     }
 
@@ -75,16 +79,41 @@ export default class UrgentOpportunitiesTable extends LightningElement {
             limitValue: this.limitValue
         })
             .then((result) => {
-                this.opportunities = result.map((opp) => {
+                // Extrage oportunitățile din răspuns
+                const opportunities = result.opportunities;
+    
+                // Creează un link pentru fiecare oportunitate
+                this.opportunities = opportunities.map((opp) => {
                     return {
                         ...opp,
-                        recordLink: `/lightning/r/Opportunity/${opp.Id}/view` // Add record URL
+                        recordLink: `/lightning/r/Opportunity/${opp.Id}/view`
                     };
                 });
+    
+                // Obține numărul total de înregistrări și calculează numărul total de pagini
+                this.totalRecords = result.totalCount;
+                this.totalPages = Math.ceil(this.totalRecords / this.limitValue);
             })
             .catch((error) => {
                 console.error('Error fetching urgent opportunities:', error);
             });
+    }
+    
+
+    handlePrevious() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.offsetValue = (this.currentPage - 1) * this.limitValue;
+            this.fetchOpportunities();
+        }
+    }
+    
+    handleNext() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.offsetValue = (this.currentPage - 1) * this.limitValue;
+            this.fetchOpportunities();
+        }
     }
 
     // Show the modal for creating new opportunities

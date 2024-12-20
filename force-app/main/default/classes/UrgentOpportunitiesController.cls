@@ -1,44 +1,53 @@
 
 public with sharing class UrgentOpportunitiesController {
-    /******************************************************************************************************************
-    * @author       : Bianca Ene
-    * @date         : 2024-12-11
-    * @description  : This method is used to retrieve a list of urgent opportunities linked to a specific account with pagination and search functionality.
-    * @param        : String searchKey : The search keyword for filtering opportunities by name.
-    * @param        : String accountId : The ID of the account to filter opportunities.
-    * @param        : Integer offsetValue : The offset for pagination.
-    * @param        : Integer limitValue : The limit of records to retrieve per page.
-    * @return       : List<Opportunity> : A list of filtered and paginated urgent opportunities.
-    ******************************************************************************************************************/
+/******************************************************************************************************************
+* @author       : Bianca Ene
+* @date         : 2024-12-11
+* @description  : This method retrieves urgent opportunities linked to a specific account with support for search 
+*                 filtering, pagination, and sorting by Close Date in ascending order. It returns both the list of 
+*                 opportunities and the total count of matching records.
+* @param        : String searchKey : A search keyword to filter opportunities by their names. Supports partial matching.
+* @param        : String accountId : The unique identifier of the account for which opportunities are retrieved.
+* @param        : Integer offsetValue : The starting index for retrieving records, used for pagination.
+* @param        : Integer limitValue : The maximum number of records to retrieve per page.
+* @return       : Map<String, Object> : A map containing two keys:
+*                                        - 'opportunities': A list of urgent opportunities matching the criteria.
+*                                        - 'totalCount': The total number of matching urgent opportunities.
+******************************************************************************************************************/
     @AuraEnabled(cacheable=true)
-    public static List<Opportunity> getUrgentOpportunities(String searchKey, String accountId, Integer offsetValue, Integer limitValue) {
-    List<Opportunity> opportunities = new List<Opportunity>();
-
-    try {
-        // Construirea query-ului
-        String baseQuery = 'SELECT Id, Name, Amount, StageName, CloseDate FROM Opportunity WHERE Urgent__c = true';
-        
-        // Construirea filtrării după AccountId
-        if (!String.isBlank(accountId)) {
-            baseQuery += ' AND AccountId = :accountId';
+    public static Map<String, Object> getUrgentOpportunities(String searchKey, String accountId, Integer offsetValue, Integer limitValue) {
+        Map<String, Object> result = new Map<String, Object>();
+        List<Opportunity> opportunities = new List<Opportunity>();
+        Integer totalCount = 0;
+    
+        try {
+            String baseQuery = 'SELECT Id, Name, Amount, StageName, CloseDate FROM Opportunity WHERE Urgent__c = true';
+            if (!String.isBlank(accountId)) {
+                baseQuery += ' AND AccountId = :accountId';
+            }
+            if (!String.isBlank(searchKey)) {
+                baseQuery += ' AND Name LIKE \'%' + String.escapeSingleQuotes(searchKey) + '%\'';
+            }
+    
+            // Query for the total count
+            totalCount = (Integer) [SELECT COUNT() FROM Opportunity WHERE Urgent__c = true AND AccountId = :accountId AND Name LIKE :('%' + searchKey + '%')];
+    
+            // Fetch opportunities with pagination
+            baseQuery += ' ORDER BY CloseDate ASC LIMIT :limitValue OFFSET :offsetValue';
+            opportunities = Database.query(baseQuery);
+    
+        } catch (Exception ex) {
+            ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'getUrgentOpportunities');
+            throw new AuraHandledException('Error retrieving urgent opportunities.');
         }
-
-        // Adăugarea filtrului de căutare
-        if (!String.isBlank(searchKey)) {
-            baseQuery += ' AND Name LIKE \'%' + String.escapeSingleQuotes(searchKey) + '%\'';
-        }
-
-        baseQuery += ' ORDER BY CloseDate ASC LIMIT :limitValue OFFSET :offsetValue';
-
-        // Executarea query-ului
-        opportunities = Database.query(baseQuery);
-    } catch (Exception ex) {
-        ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'getUrgentOpportunities');
-        throw new AuraHandledException('Error retrieving urgent opportunities.');
+    
+        result.put('opportunities', opportunities);
+        result.put('totalCount', totalCount);
+    
+        return result;
     }
-    return opportunities;
-}
-
+    
+    
 
     /******************************************************************************************************************
 * @author       : Bianca Ene
@@ -57,12 +66,9 @@ public static Boolean createOpportunityAsync(Id accountId, String name, String s
         System.enqueueJob(new CreateUrgentOpportunityQueueable(accountId, name, stageName, amount, closeDate));
         return true; 
     } catch (Exception ex) {
-        // Logăm eroarea fără a trimite feedback negativ către UI
         ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunityAsync');
-        return false; // Indică o eroare (dar UI nu afișează notificare)
+        return false; 
     }
 }
 
-
-    
 }

@@ -4,10 +4,10 @@ public class UrgentOpportunitiesControllerTest {
     // Test pentru getUrgentOpportunities - succes, fără searchKey
     @isTest
     static void testGetUrgentOpportunitiesSuccess() {
-        // Creează date de test
+        // Create test data
         Account testAccount = new Account(Name = 'Test Account');
         insert testAccount;
-
+    
         Opportunity opp1 = new Opportunity(
             Name = 'Urgent Opportunity 1',
             StageName = 'Prospecting',
@@ -17,27 +17,32 @@ public class UrgentOpportunitiesControllerTest {
             AccountId = testAccount.Id
         );
         insert opp1;
-
+    
         Test.startTest();
-        List<Opportunity> results = UrgentOpportunitiesController.getUrgentOpportunities(
-            '', // searchKey gol
-            testAccount.Id, // AccountId valid
+        // Adjust to handle Map<String, Object>
+        Map<String, Object> result = UrgentOpportunitiesController.getUrgentOpportunities(
+            '', // searchKey empty
+            testAccount.Id, // valid AccountId
             0, // offset
             10 // limit
         );
         Test.stopTest();
-
-        // Verificăm rezultatul
-        System.assertEquals(1, results.size(), 'There should be one urgent opportunity returned');
-        System.assertEquals('Urgent Opportunity 1', results[0].Name, 'Opportunity name mismatch');
+    
+        // Extract the opportunities list from the result
+        List<Opportunity> opportunities = (List<Opportunity>) result.get('opportunities');
+        Integer totalCount = (Integer) result.get('totalCount');
+    
+        // Assertions
+        System.assertEquals(1, opportunities.size(), 'There should be one urgent opportunity returned');
+        System.assertEquals('Urgent Opportunity 1', opportunities[0].Name, 'Opportunity name mismatch');
+        System.assertEquals(1, totalCount, 'Total count should match the number of records created');
     }
-
-    // Test pentru getUrgentOpportunities - succes, cu searchKey
+    
     @isTest
     static void testGetUrgentOpportunitiesWithSearchKey() {
         Account testAccount = new Account(Name = 'Test Account');
         insert testAccount;
-
+    
         Opportunity opp1 = new Opportunity(
             Name = 'SearchKey Opportunity',
             StageName = 'Prospecting',
@@ -47,18 +52,25 @@ public class UrgentOpportunitiesControllerTest {
             AccountId = testAccount.Id
         );
         insert opp1;
-
+    
         Test.startTest();
-        List<Opportunity> results = UrgentOpportunitiesController.getUrgentOpportunities(
+        // Adjust to handle Map<String, Object>
+        Map<String, Object> result = UrgentOpportunitiesController.getUrgentOpportunities(
             'SearchKey', // searchKey
             testAccount.Id,
             0,
             10
         );
         Test.stopTest();
-
-        System.assertEquals(1, results.size(), 'Filter did not return expected results');
-        System.assertEquals('SearchKey Opportunity', results[0].Name, 'Filtered opportunity name mismatch');
+    
+        // Extract the opportunities list from the result
+        List<Opportunity> opportunities = (List<Opportunity>) result.get('opportunities');
+        Integer totalCount = (Integer) result.get('totalCount');
+    
+        // Assertions
+        System.assertEquals(1, opportunities.size(), 'Filter did not return expected results');
+        System.assertEquals('SearchKey Opportunity', opportunities[0].Name, 'Filtered opportunity name mismatch');
+        System.assertEquals(1, totalCount, 'Total count should match the number of records created');
     }
 
     // Test pentru getUrgentOpportunities - exception
