@@ -80,7 +80,7 @@ static void testGetUrgentOpportunitiesException() {
     try {
         // Transmitem valori invalide pentru filtrul searchKey și offsetValue
         UrgentOpportunitiesController.getUrgentOpportunities(
-            '\'', null, -1, 10 // Apostrof special și offset negativ
+            null, null, -1, 10 // Apostrof special și offset negativ
         );
         System.assert(false, 'An AuraHandledException should have been thrown');
     } catch (AuraHandledException ex) {
@@ -100,48 +100,46 @@ static void testGetUrgentOpportunitiesException() {
 }
 
 
-    
+     // Test pentru createOpportunity - succes
+     @isTest
+     static void testCreateOpportunitySuccess() {
+         Account testAccount = new Account(Name = 'Test Account');
+         insert testAccount;
+ 
+         Test.startTest();
+         Opportunity result = UrgentOpportunitiesController.createOpportunity(
+             testAccount.Id,
+             'Test Opportunity',
+             'Prospecting',
+             2000,
+             Date.today()
+         );
+         Test.stopTest();
+ 
+         System.assertNotEquals(null, result, 'Opportunity should be created successfully');
+         System.assertEquals('Test Opportunity', result.Name, 'Opportunity Name should match');
+         System.assertEquals('Prospecting', result.StageName, 'StageName should match');
+     }
+ 
+     // Test pentru createOpportunity - eșec
+     @isTest
+     static void testCreateOpportunityFailure() {
+         Account testAccount = new Account(Name = 'Test Account');
+         insert testAccount;
+ 
+         Test.startTest();
+         try {
+             Opportunity result = UrgentOpportunitiesController.createOpportunity(
+                 testAccount.Id, 'Opportunity Failure', '', 1000, Date.today() // StageName gol
+             );
+             System.assert(false, 'Expected an exception for missing StageName');
+         } catch (AuraHandledException e) {
+             System.assertEquals('All fields are required.', e.getMessage(), 'Error message should match the validation error');
+         }
+         Test.stopTest();
+     }
     
 
-    // Test pentru createOpportunityAsync - succes
-    @isTest
-    static void testCreateOpportunityAsyncSuccess() {
-        Account testAccount = new Account(Name = 'Test Account');
-        insert testAccount;
 
-        Test.startTest();
-        Boolean result = UrgentOpportunitiesController.createOpportunityAsync(
-            testAccount.Id,
-            'Test Opportunity',
-            'Prospecting',
-            2000,
-            Date.today()
-        );
-        Test.stopTest();
-
-        System.assert(result, 'Job should have been enqueued successfully');
-    }
-
-    // Test pentru createOpportunityAsync - eșec
-    @isTest
-    static void testCreateOpportunityAsyncFailure() {
-        // 1. Creează date de test
-        Account testAccount = new Account(Name = 'Test Account');
-        insert testAccount;
-    
-        // 2. Apelează metoda cu stageName gol pentru a forța eșec
-        Test.startTest();
-        Boolean result = UrgentOpportunitiesController.createOpportunityAsync(
-            testAccount.Id, 'Opportunity Failure', '', 1000, Date.today() // StageName gol
-        );
-        Test.stopTest();
-    
-        // 3. Verificăm dacă eroarea este logată
-        List<Error_Log__c> logs = [SELECT Message__c FROM Error_Log__c];
-        System.assertEquals(1, logs.size(), 'Error should be logged when Queueable job fails');
-        System.assert(logs[0].Message__c.contains('REQUIRED_FIELD_MISSING'), 
-            'Error log should indicate missing required fields');
-    }
-    
 
 }

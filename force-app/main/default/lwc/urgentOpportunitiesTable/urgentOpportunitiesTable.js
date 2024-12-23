@@ -1,7 +1,11 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import getUrgentOpportunities from '@salesforce/apex/UrgentOpportunitiesController.getUrgentOpportunities';
-import createOpportunityAsync from '@salesforce/apex/UrgentOpportunitiesController.createOpportunityAsync';
+import createOpportunity from '@salesforce/apex/UrgentOpportunitiesController.createOpportunity';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import OPPORTUNITY_OBJECT from '@salesforce/schema/Opportunity';
+import STAGE_NAME_FIELD from '@salesforce/schema/Opportunity.StageName';
 
 export default class UrgentOpportunitiesTable extends LightningElement {
     @api recordId; // ID-ul contului curent
@@ -11,27 +15,26 @@ export default class UrgentOpportunitiesTable extends LightningElement {
     @track limitValue = 10; // Numărul de înregistrări pe pagină
     @track showModal = false; // Track modal visibility
     @track newOpportunity = {}; // Track new opportunity fields
-    @track stageOptions = [
-        { label: 'Prospecting', value: 'Prospecting' },
-        { label: 'Qualification', value: 'Qualification' },
-        { label: 'Need Analysis', value: 'Need Analysis' },
-        { label: 'Value Proposition', value: 'Value Proposition' },
-        { label: 'Id. Decision Maker', value: 'Id. Decision Maker' },
-        { label: 'Perception Analysis', value: 'Perception Analysis' },
-        { label: 'Proposal/Price Quote', value: 'Proposal/Price Quote' },
-        { label: 'Negotiation/Review', value: 'Negotiation/Review' },
-        { label: 'Closed Won', value: 'Closed Won' },
-        { label: 'Closed Lost', value: 'Closed Lost' }
-    ];
+    @track stageOptions = [];
     @track totalRecords = 0;
     @track currentPage = 1; 
     @track totalPages = 0; 
-    
-    // valori pt Stage name
-    handleModalInputChange(event) {
-        const field = event.target.name;
-        const value = event.detail.value;
-        this.newOpportunity[field] = value;
+
+    @wire(getObjectInfo, { objectApiName: OPPORTUNITY_OBJECT })
+    opportunityMetadata;
+
+    @wire(getPicklistValues, {
+        recordTypeId: '$opportunityMetadata.data.defaultRecordTypeId',
+        fieldApiName: STAGE_NAME_FIELD
+    })
+    wiredStageOptions({ data, error }) {
+        if (data) {
+            this.stageOptions = data.values.map((option) => {
+                return { label: option.label, value: option.value };
+            });
+        } else if (error) {
+            console.error('Error fetching stage options:', error);
+        }
     }
     
     columns = [
@@ -139,9 +142,8 @@ export default class UrgentOpportunitiesTable extends LightningElement {
             );
             return;
         }
-    
         // Apelăm metoda Apex
-        createOpportunityAsync({
+        createOpportunity({
             accountId: this.recordId,
             name: this.newOpportunity.Name,
             stageName: this.newOpportunity.StageName,
@@ -149,8 +151,8 @@ export default class UrgentOpportunitiesTable extends LightningElement {
             closeDate: this.newOpportunity.CloseDate
         })
             .then(() => {
-                this.showModal = false; // Închide modalul
-                this.fetchOpportunities(); // Reîmprospătează tabelul
+                this.showModal = false; 
+                this.fetchOpportunities(); 
                 this.dispatchEvent(
                     new ShowToastEvent({
                         title: 'Success',
@@ -169,12 +171,10 @@ export default class UrgentOpportunitiesTable extends LightningElement {
                     })
                 );
             });
-    }
-    
-    
+    } 
 
     closeModal() {
-        this.showModal = false; // Close modal
+        this.showModal = false;
     }
     
 }
