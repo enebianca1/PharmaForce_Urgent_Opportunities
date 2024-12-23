@@ -130,19 +130,38 @@ export default class UrgentOpportunitiesTable extends LightningElement {
         this.newOpportunity[field] = event.target.value;
     }
 
+    validateFields() {
+        const requiredFields = ['Name', 'StageName', 'Amount', 'CloseDate'];
+        let isValid = true;
+        let firstInvalidField;
+
+        requiredFields.forEach((field) => {
+            const input = this.template.querySelector(`[data-name="${field}"]`);
+            if (input && !input.value) {
+                input.setCustomValidity(`${field} is required`);
+                input.reportValidity();
+                isValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = input;
+                }
+            } else if (input) {
+                input.setCustomValidity('');
+                input.reportValidity();
+            }
+        });
+
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+        }
+
+        return isValid;
+    }
+
+
     saveOpportunity() {
-        // Validăm câmpurile local
-        if (!this.newOpportunity.Name || !this.newOpportunity.StageName || !this.newOpportunity.Amount || !this.newOpportunity.CloseDate) {
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Error',
-                    message: 'All fields are required.',
-                    variant: 'error'
-                })
-            );
+        if (!this.validateFields()) {
             return;
         }
-        // Apelăm metoda Apex
         createOpportunity({
             accountId: this.recordId,
             name: this.newOpportunity.Name,
