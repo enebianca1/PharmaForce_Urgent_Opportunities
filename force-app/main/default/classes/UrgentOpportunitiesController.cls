@@ -29,16 +29,13 @@ public with sharing class UrgentOpportunitiesController {
                 baseQuery += ' AND Name LIKE \'%' + String.escapeSingleQuotes(searchKey) + '%\'';
             }
     
-            // Query for the total count
             totalCount = (Integer) [SELECT COUNT() FROM Opportunity WHERE Urgent__c = true AND AccountId = :accountId AND Name LIKE :('%' + searchKey + '%')];
-    
-            // Fetch opportunities with pagination
+
             baseQuery += ' ORDER BY CloseDate ASC LIMIT :limitValue OFFSET :offsetValue';
             opportunities = Database.query(baseQuery);
     
         } catch (Exception ex) {
             ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'getUrgentOpportunities');
-            throw new AuraHandledException('Error retrieving urgent opportunities.');
         }
     
         result.put('opportunities', opportunities);
@@ -49,26 +46,34 @@ public with sharing class UrgentOpportunitiesController {
     
     
 
-    /******************************************************************************************************************
+/******************************************************************************************************************
 * @author       : Bianca Ene
 * @date         : 2024-12-11
-* @description  : This method asynchronously creates a new urgent opportunity and links it to a specific account.
+* @description  : This method synchronously creates a new urgent opportunity and links it to a specific account.
 * @param        : Id accountId : The ID of the account to which the opportunity is linked.
 * @param        : String name : The name of the opportunity to be created.
 * @param        : String stageName : The stage of the opportunity.
 * @param        : Decimal amount : The amount value of the opportunity.
 * @param        : Date closeDate : The close date of the opportunity.
-* @return       : void
+* @return       : Opportunity : The newly created opportunity record.
 ******************************************************************************************************************/
 @AuraEnabled
-public static Boolean createOpportunityAsync(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
-    try {
-        System.enqueueJob(new CreateUrgentOpportunityQueueable(accountId, name, stageName, amount, closeDate));
-        return true; 
-    } catch (Exception ex) {
-        ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunityAsync');
-        return false; 
+public static Opportunity createOpportunity(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
+    if (accountId == null || String.isBlank(name) || String.isBlank(stageName) || amount == null || closeDate == null) {
+        throw new AuraHandledException('All fields are required.');
     }
+    Opportunity opp = new Opportunity(
+        AccountId = accountId,
+        Name = name,
+        StageName = stageName,
+        Amount = amount,
+        CloseDate = closeDate,
+        Urgent__c = true 
+    );
+    insert opp;
+    System.debug('Opportunity created: ' + opp);
+    return opp;
 }
+
 
 }
