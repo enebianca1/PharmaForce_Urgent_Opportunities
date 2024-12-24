@@ -59,9 +59,6 @@ public with sharing class UrgentOpportunitiesController {
 ******************************************************************************************************************/
 @AuraEnabled
 public static Opportunity createOpportunity(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
-    if (accountId == null) {
-        throw new AuraHandledException('AccountId is required.');
-    }
     if (String.isBlank(name)) {
         throw new AuraHandledException('Opportunity Name is required.');
     }

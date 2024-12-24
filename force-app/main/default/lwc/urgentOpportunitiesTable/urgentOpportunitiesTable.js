@@ -133,10 +133,10 @@ export default class UrgentOpportunitiesTable extends LightningElement {
     validateFields() {
         const requiredFields = ['Name', 'StageName', 'Amount', 'CloseDate'];
         let isValid = true;
-        let firstInvalidField;
+        let firstInvalidField=null;
 
         requiredFields.forEach((field) => {
-            const input = this.template.querySelector(`[data-name="${field}"]`);
+            const input = this.template.querySelector(`[name="${field}"]`);
             if (input && !input.value) {
                 input.setCustomValidity(`${field} is required`);
                 input.reportValidity();
