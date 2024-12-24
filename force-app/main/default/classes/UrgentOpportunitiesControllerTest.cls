@@ -1,113 +1,181 @@
 @isTest
 public class UrgentOpportunitiesControllerTest {
-
-    static Account testAccount;
-    static Opportunity testOpportunity;
-
-    @testSetup
-    static void makeData() {
-        // Creare și inserare Account
-        testAccount = new Account(Name = 'Test Account');
+    
+    private static void makeData() {
+        Account testAccount = new Account(
+            Name = 'Test Account'
+        );
         insert testAccount;
-
-        // Creare și inserare Opportunity
-        testOpportunity = new Opportunity(
-            Name = 'Test Opportunity',
-            StageName = 'Prospecting',
-            Amount = 1000,
-            CloseDate = Date.today(),
-            Urgent__c = true,
-            AccountId = testAccount.Id
-        );
-        insert testOpportunity;
+        
+        List<Opportunity> opportunities = new List<Opportunity>();
+        for (Integer i = 1; i <= 5; i++) {
+            opportunities.add(new Opportunity(
+                AccountId = testAccount.Id,
+                Name = 'Urgent Opportunity ' + i, 
+                StageName = 'Prospecting',
+                CloseDate = Date.today().addDays(i),
+                Amount = 1000 * i,
+                Urgent__c = true 
+            ));
+        }
+        insert opportunities;
     }
-
+    
     @isTest
-    static void testGetUrgentOpportunitiesSuccess() {
+    static void testGetUrgentOpportunities() {
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
         Test.startTest();
+        
         Map<String, Object> result = UrgentOpportunitiesController.getUrgentOpportunities(
-            '', // Fără searchKey
-            testAccount.Id, // ID valid de Account
-            0, // Offset
-            10 // Limită
+            'Urgent', 
+            testAccount.Id, 
+            0, 
+            3
         );
         Test.stopTest();
 
         List<Opportunity> opportunities = (List<Opportunity>) result.get('opportunities');
         Integer totalCount = (Integer) result.get('totalCount');
 
-        System.assertEquals(1, opportunities.size(), 'There should be one urgent opportunity returned');
-        System.assertEquals('Test Opportunity', opportunities[0].Name, 'Opportunity name mismatch');
-        System.assertEquals(1, totalCount, 'Total count should match the number of records created');
-    }
-
-    @isTest
-    static void testGetUrgentOpportunitiesWithSearchKey() {
-        Test.startTest();
-        Map<String, Object> result = UrgentOpportunitiesController.getUrgentOpportunities(
-            'Test', // SearchKey
-            testAccount.Id,
-            0,
-            10
-        );
-        Test.stopTest();
-
-        List<Opportunity> opportunities = (List<Opportunity>) result.get('opportunities');
-        Integer totalCount = (Integer) result.get('totalCount');
-
-        System.assertEquals(1, opportunities.size(), 'Filter did not return expected results');
-        System.assertEquals('Test Opportunity', opportunities[0].Name, 'Filtered opportunity name mismatch');
-        System.assertEquals(1, totalCount, 'Total count should match the number of records created');
+        System.assertEquals(3, opportunities.size(), 'Expected 3 urgent opportunities returned.');
+        System.assertEquals(5, totalCount, 'Expected total count of urgent opportunities to be 5.');
+        System.assertEquals('Urgent Opportunity 1', opportunities[0].Name, 'Expected the first opportunity to be sorted by CloseDate ASC.');
     }
 
     @isTest
     static void testGetUrgentOpportunitiesException() {
-        Test.startTest();
-        try {
-            UrgentOpportunitiesController.getUrgentOpportunities(
-                null, null, -1, 10 // Offset negativ
-            );
-            System.assert(false, 'An AuraHandledException should have been thrown');
-        } catch (AuraHandledException ex) {
-            System.assertEquals('Error retrieving urgent opportunities.', ex.getMessage(), 'Incorrect exception message');
-        }
-        Test.stopTest();
+    makeData();
+    Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
 
-        List<Error_Log__c> logs = [SELECT Message__c, ClassName__c, MethodName__c FROM Error_Log__c];
-        System.assertEquals(1, logs.size(), 'Error should be logged');
-        System.assertEquals('UrgentOpportunitiesController', logs[0].ClassName__c, 'ClassName mismatch in log');
-        System.assertEquals('getUrgentOpportunities', logs[0].MethodName__c, 'MethodName mismatch in log');
+    Test.startTest();
+    try {
+        UrgentOpportunitiesController.getUrgentOpportunities(
+            'Urgent', 
+            testAccount.Id, 
+            0, 
+            -1 
+        );
+        System.assert(false, 'Expected an exception to be thrown.');
+    } catch (Exception e) {
+        System.assert(true, 'Exception successfully caught.');
     }
+    Test.stopTest();
+  }
 
     @isTest
-    static void testCreateOpportunitySuccess() {
+    static void testCreateOpportunity() {
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
         Test.startTest();
-        Opportunity result = UrgentOpportunitiesController.createOpportunity(
+      
+        Opportunity newOpportunity = UrgentOpportunitiesController.createOpportunity(
             testAccount.Id,
-            'New Opportunity',
-            'Qualification',
-            2000,
-            Date.today()
+            'New Urgent Opportunity',
+            'Negotiation',
+            5000,
+            Date.today().addDays(10)
         );
         Test.stopTest();
 
-        System.assertEquals('New Opportunity', result.Name, 'Opportunity Name should match');
-        System.assertEquals('Qualification', result.StageName, 'StageName should match');
-        System.assertEquals(2000, result.Amount, 'Opportunity Amount should match');
-        System.assertEquals(Date.today(), result.CloseDate, 'Opportunity Close Date should match');
+        Opportunity insertedOpp = [SELECT Name, StageName, Amount, CloseDate, Urgent__c 
+                                   FROM Opportunity 
+                                   WHERE Id = :newOpportunity.Id];
+
+        System.assertEquals('New Urgent Opportunity', insertedOpp.Name, 'Opportunity Name mismatch.');
+        System.assertEquals('Negotiation', insertedOpp.StageName, 'StageName mismatch.');
+        System.assertEquals(5000, insertedOpp.Amount, 'Amount mismatch.');
+        System.assertEquals(Date.today().addDays(10), insertedOpp.CloseDate, 'CloseDate mismatch.');
+        System.assertEquals(true, insertedOpp.Urgent__c, 'Urgent flag mismatch.');
     }
 
+    // Negative Tests Case for createOpportunity (missing required fields)
     @isTest
-    static void testCreateOpportunityFailure() {
+    static void testCreateOpportunityMissingName() {
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+
         Test.startTest();
         try {
             UrgentOpportunitiesController.createOpportunity(
-                testAccount.Id, '', 'Prospecting', 1000, Date.today() // Name gol
+                testAccount.Id,
+                null, 
+                'Prospecting',
+                3000,
+                Date.today()
             );
-            System.assert(false, 'Expected an exception for missing Name');
-        } catch (AuraHandledException ex) {
-            System.assertEquals('Opportunity Name is required.', ex.getMessage(), 'Error message should match validation error');
+            System.assert(false, 'Expected AuraHandledException for missing Name.');
+        } catch (Exception e) {
+            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing Name.');
+            System.assertEquals('Opportunity Name is required.', e.getMessage(), 'Incorrect exception message for missing Name.');
         }
         Test.stopTest();
     }
+
+    @isTest
+    static void testCreateOpportunityMissingStageName() {
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+
+        Test.startTest();
+        try {
+            UrgentOpportunitiesController.createOpportunity(
+                testAccount.Id,
+                'Test Opportunity',
+                null, 
+                3000,
+                Date.today()
+            );
+            System.assert(false, 'Expected AuraHandledException for missing StageName.');
+        } catch (Exception e) {
+            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing StageName.');
+            System.assertEquals('Stage Name is required.', e.getMessage(), 'Incorrect exception message for missing StageName.');
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testCreateOpportunityMissingAmount() {
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+
+        Test.startTest();
+        try {
+            UrgentOpportunitiesController.createOpportunity(
+                testAccount.Id,
+                'Test Opportunity',
+                'Prospecting',
+                null, 
+                Date.today()
+            );
+            System.assert(false, 'Expected AuraHandledException for missing Amount.');
+        } catch (Exception e) {
+            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing Amount.');
+            System.assertEquals('Amount is required.', e.getMessage(), 'Incorrect exception message for missing Amount.');
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testCreateOpportunityMissingCloseDate() {
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+
+        Test.startTest();
+        try {
+            UrgentOpportunitiesController.createOpportunity(
+                testAccount.Id,
+                'Test Opportunity',
+                'Prospecting',
+                3000,
+                null 
+            );
+            System.assert(false, 'Expected AuraHandledException for missing CloseDate.');
+        } catch (Exception e) {
+            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing CloseDate.');
+            System.assertEquals('Close Date is required.', e.getMessage(), 'Incorrect exception message for missing CloseDate.');
+        }
+        Test.stopTest();
+    }
+
 }

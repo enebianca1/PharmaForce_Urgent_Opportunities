@@ -1,5 +1,19 @@
 public class UrgentOpportunityHandler {
 
+    /******************************************************************************************************************
+* @author       : Bianca Ene
+* @date         : 2024-12-23
+* @description  : This method handles the post-insert event for Opportunities marked as urgent. It sends custom 
+*                 notifications to the opportunity creator and account team members, as well as email notifications 
+*                 using a predefined email template. Notifications and emails are only sent for opportunities 
+*                 associated with an account and flagged as urgent.
+* @param        : List<Opportunity> opportunities : A list of opportunities that were recently inserted.
+* @logic        : - Queries the custom notification type and email template needed for notifications and emails.
+*                 - Identifies opportunities marked as urgent and their associated accounts.
+*                 - Maps account team members to their respective accounts.
+*                 - Sends custom notifications to the opportunity creator and account team members.
+*                 - Sends email notifications to account team members using a predefined email template.
+******************************************************************************************************************/
     public static void handleAfterInsert(List<Opportunity> opportunities) {
         CustomNotificationType cnType = [
             SELECT Id 
