@@ -11,13 +11,12 @@ The goal of this task was to implement notifications for urgent opportunities in
 Custom notifications allow direct alerts to be displayed to users within the Salesforce app, accessible from the notification bell icon. These notifications are sent to the user who created the urgent opportunity and to the account team members associated with it.
 
 ### Implementation
-A custom notification type, named `UrgentOpportunityNotification`, was created under **Notification Builder** in Salesforce Setup. 
+- A custom notification type, named `UrgentOpportunityNotification`, was created under **Notification Builder** in Salesforce Setup.
+- An Apex Trigger was created to invoke a method in the `UrgentOpportunityHandler` class. This method contains the logic to:
+  - Identify and process urgent opportunities.
+  - Send notifications to the creator and account team members.
 
-A trigger was implemented to send these notifications:
-- The creator of the opportunity receives a notification with the details.
-- Other account team members also receive a notification to keep them informed of new developments.
-
-These notifications improve collaboration and ensure timely updates for all stakeholders.
+This approach ensures a clean separation of concerns, with the trigger delegating the processing logic to the handler class.
 
 ---
 
@@ -27,25 +26,26 @@ These notifications improve collaboration and ensure timely updates for all stak
 Email notifications provide an additional layer of communication, ensuring users are informed even if they are not actively logged into Salesforce. Emails are sent to users involved with the urgent opportunity.
 
 ### Implementation
-A **Classic Email Template** was created to standardize the content of the email notifications. The template includes essential details such as the opportunity name, amount, and closing date.
+- A **Classic Email Template** was created to standardize the content of email notifications. The template includes details such as:
+  - Opportunity Name
+  - Opportunity Amount
+  - Closing Date
+- The `UrgentOpportunityHandler` class handles email notification logic. The handler:
+  - Sends an email to the creator of the opportunity.
+  - Notifies other relevant users (e.g., account team members) via email with the same details.
 
-The trigger logic was extended to:
-- Send an email to the creator of the opportunity.
-- Notify other relevant users via email with the same details.
-
-This ensures important updates reach the intended audience promptly and effectively.
+This ensures that critical updates reach the intended audience promptly and effectively.
 
 ---
 
 ## Trigger Workflow
 
 ### Functionality
-The trigger executes after an opportunity is inserted:
-1. It checks if the opportunity is marked as urgent.
-2. Custom notifications are created and sent to relevant users.
-3. Email notifications are triggered for the creator and account team members.
+The trigger is designed to execute after an opportunity is inserted. Its role is to:
+1. Check if the opportunity meets the criteria for being urgent.
+2. Delegate processing to the `UrgentOpportunityHandler` class by calling its method.
 
-This automated workflow ensures a seamless process for notifying all stakeholders about critical opportunities.
+This workflow ensures the trigger remains lightweight, while the handler class manages the notification logic.
 
 ---
 
@@ -58,6 +58,10 @@ The functionality was thoroughly tested by:
 - Confirming email notifications were delivered to the appropriate recipients.
 
 ### Results
-Both notification types worked as expected. Custom notifications appeared in the Salesforce notification bell, and email alerts were received with accurate details.
+- **Custom Notifications**: Appeared in the Salesforce notification bell for all intended users.
+- **Email Alerts**: Delivered successfully to the correct recipients with accurate details.
 
 ---
+
+## Conclusion
+By delegating the logic to the `UrgentOpportunityHandler` class, the implementation ensures a clean and maintainable code structure. The combination of custom notifications and email alerts ensures timely updates and enhanced collaboration for managing urgent opportunities.

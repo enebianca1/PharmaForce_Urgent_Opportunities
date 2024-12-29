@@ -71,17 +71,22 @@ public static Opportunity createOpportunity(Id accountId, String name, String st
     if (closeDate == null) {
         throw new AuraHandledException('Close Date is required.');
     }
-    Opportunity opp = new Opportunity(
-        AccountId = accountId,
-        Name = name,
-        StageName = stageName,
-        Amount = amount,
-        CloseDate = closeDate,
-        Urgent__c = true 
-    );
-    insert opp;
-    System.debug('Opportunity created: ' + opp);
-    return opp;
+    Opportunity opp;
+        try {
+            opp = new Opportunity(
+                AccountId = accountId,
+                Name = name,
+                StageName = stageName,
+                Amount = amount,
+                CloseDate = closeDate,
+                Urgent__c = true 
+            );
+            insert opp;
+        } catch (Exception ex) {
+            ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunity');
+            throw new AuraHandledException('An error occurred while creating the opportunity. Please try again.');
+        }
+        return opp;
 }
 
 
