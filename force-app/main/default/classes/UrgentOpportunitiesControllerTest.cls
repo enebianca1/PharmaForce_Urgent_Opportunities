@@ -67,9 +67,9 @@ public class UrgentOpportunitiesControllerTest {
     static void testCreateOpportunity() {
         makeData();
         Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+        
         Test.startTest();
-      
-        Opportunity newOpportunity = UrgentOpportunitiesController.createOpportunity(
+        Boolean isSuccess = UrgentOpportunitiesController.createOpportunity(
             testAccount.Id,
             'New Urgent Opportunity',
             'Negotiation',
@@ -77,17 +77,20 @@ public class UrgentOpportunitiesControllerTest {
             Date.today().addDays(10)
         );
         Test.stopTest();
-
+    
+        System.assert(isSuccess, 'Expected the opportunity creation to be successful.');
+    
         Opportunity insertedOpp = [SELECT Name, StageName, Amount, CloseDate, Urgent__c 
                                    FROM Opportunity 
-                                   WHERE Id = :newOpportunity.Id];
-
+                                   WHERE Name = 'New Urgent Opportunity' LIMIT 1];
+    
         System.assertEquals('New Urgent Opportunity', insertedOpp.Name, 'Opportunity Name mismatch.');
         System.assertEquals('Negotiation', insertedOpp.StageName, 'StageName mismatch.');
         System.assertEquals(5000, insertedOpp.Amount, 'Amount mismatch.');
         System.assertEquals(Date.today().addDays(10), insertedOpp.CloseDate, 'CloseDate mismatch.');
         System.assertEquals(true, insertedOpp.Urgent__c, 'Urgent flag mismatch.');
     }
+    
 
     // Negative Tests Case for createOpportunity (missing required fields)
     @isTest

@@ -169,16 +169,26 @@ export default class UrgentOpportunitiesTable extends LightningElement {
             amount: this.newOpportunity.Amount,
             closeDate: this.newOpportunity.CloseDate
         })
-            .then(() => {
-                this.showModal = false; 
-                this.fetchOpportunities(); 
-                this.dispatchEvent(
-                    new ShowToastEvent({
-                        title: 'Success',
-                        message: 'Opportunity created successfully',
-                        variant: 'success'
-                    })
-                );
+            .then((isSuccess) => {
+                if (isSuccess) {
+                    this.showModal = false;
+                    this.fetchOpportunities();
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'Success',
+                            message: 'Opportunity created successfully',
+                            variant: 'success'
+                        })
+                    );
+                } else {
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'Error',
+                            message: 'Failed to create opportunity',
+                            variant: 'error'
+                        })
+                    );
+                }
             })
             .catch((error) => {
                 console.error(error);
@@ -190,7 +200,8 @@ export default class UrgentOpportunitiesTable extends LightningElement {
                     })
                 );
             });
-    } 
+    }
+    
 
     closeModal() {
         this.showModal = false;
