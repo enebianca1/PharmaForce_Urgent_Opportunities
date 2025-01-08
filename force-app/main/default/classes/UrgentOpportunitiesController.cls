@@ -58,7 +58,7 @@ public with sharing class UrgentOpportunitiesController {
 * @return       : Opportunity : The newly created opportunity record.
 ******************************************************************************************************************/
 @AuraEnabled
-public static Opportunity createOpportunity(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
+public static Boolean createOpportunity(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
     if (String.isBlank(name)) {
         throw new AuraHandledException('Opportunity Name is required.');
     }
@@ -71,23 +71,24 @@ public static Opportunity createOpportunity(Id accountId, String name, String st
     if (closeDate == null) {
         throw new AuraHandledException('Close Date is required.');
     }
-    Opportunity opp;
-        try {
-            opp = new Opportunity(
-                AccountId = accountId,
-                Name = name,
-                StageName = stageName,
-                Amount = amount,
-                CloseDate = closeDate,
-                Urgent__c = true 
-            );
-            insert opp;
-        } catch (Exception ex) {
-            ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunity');
-            throw new AuraHandledException('An error occurred while creating the opportunity. Please try again.');
-        }
-        return opp;
+
+    try {
+        Opportunity opp = new Opportunity(
+            AccountId = accountId,
+            Name = name,
+            StageName = stageName,
+            Amount = amount,
+            CloseDate = closeDate,
+            Urgent__c = true
+        );
+        insert opp;
+        return true; // Indicate success
+    } catch (Exception ex) {
+        ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunity');
+        return false; // Indicate failure
+    }
 }
+
 
 
 }
