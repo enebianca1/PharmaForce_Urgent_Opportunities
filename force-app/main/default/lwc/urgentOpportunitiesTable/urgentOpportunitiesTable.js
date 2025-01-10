@@ -8,17 +8,17 @@ import OPPORTUNITY_OBJECT from '@salesforce/schema/Opportunity';
 import STAGE_NAME_FIELD from '@salesforce/schema/Opportunity.StageName';
 
 export default class UrgentOpportunitiesTable extends LightningElement {
-    @api recordId; // ID-ul contului curent
-    @track opportunities = [];
-    @track searchKey = '';
-    @track offsetValue = 0;
-    @track limitValue = 10; // Numărul de înregistrări pe pagină
-    @track showModal = false; // Track modal visibility
-    @track newOpportunity = {}; // Track new opportunity fields
-    @track stageOptions = [];
-    @track totalRecords = 0;
-    @track currentPage = 1; 
-    @track totalPages = 0; 
+    @api recordId; 
+     opportunities = [];
+     searchKey = '';
+     offsetValue = 0;
+     limitValue = 10;
+     showModal = false; 
+     newOpportunity = {}; 
+     stageOptions = [];
+     totalRecords = 0;
+     currentPage = 1; 
+     totalPages = 0; 
 
     @wire(getObjectInfo, { objectApiName: OPPORTUNITY_OBJECT })
     opportunityMetadata;
@@ -40,8 +40,8 @@ export default class UrgentOpportunitiesTable extends LightningElement {
     columns = [
         {
             label: 'Name',
-            fieldName: 'recordLink', // Use a custom field for navigation
-            type: 'url', // URL type for clickable links
+            fieldName: 'recordLink', 
+            type: 'url', 
             typeAttributes: { label: { fieldName: 'Name' }, target: '_blank' }
         },
         { label: 'Amount', fieldName: 'Amount', type: 'currency' },
@@ -55,7 +55,7 @@ export default class UrgentOpportunitiesTable extends LightningElement {
 
     handleSearch(event) {
         this.searchKey = event.target.value;
-        this.offsetValue = 0; // Resetează la prima pagină
+        this.offsetValue = 0; 
         this.currentPage = 1;
         this.fetchOpportunities();
     }
@@ -82,10 +82,8 @@ export default class UrgentOpportunitiesTable extends LightningElement {
             limitValue: this.limitValue
         })
             .then((result) => {
-                // Extrage oportunitățile din răspuns
                 const opportunities = result.opportunities;
     
-                // Creează un link pentru fiecare oportunitate
                 this.opportunities = opportunities.map((opp) => {
                     return {
                         ...opp,
@@ -93,7 +91,6 @@ export default class UrgentOpportunitiesTable extends LightningElement {
                     };
                 });
     
-                // Obține numărul total de înregistrări și calculează numărul total de pagini
                 this.totalRecords = result.totalCount;
                 this.totalPages = Math.ceil(this.totalRecords / this.limitValue);
             })
@@ -119,9 +116,8 @@ export default class UrgentOpportunitiesTable extends LightningElement {
         }
     }
 
-    // Show the modal for creating new opportunities
     handleNewOpportunity() {
-        this.newOpportunity = {}; // Reset the form
+        this.newOpportunity = {};
         this.showModal = true;
     }
 

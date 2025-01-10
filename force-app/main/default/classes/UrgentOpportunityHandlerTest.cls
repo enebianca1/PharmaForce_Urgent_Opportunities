@@ -46,23 +46,24 @@ public class UrgentOpportunityHandlerTest {
         CustomNotificationType cnType = [
             SELECT Id FROM CustomNotificationType WHERE DeveloperName = 'UrgentOpportunityNotification' LIMIT 1
         ];
-        System.assertNotEquals(null, cnType, 'CustomNotificationType must exist in the org for the test.');
+        Assert.isNotNull(cnType, 'CustomNotificationType must exist in the org for the test.');
+        
         EmailTemplate emailTemplate = [
             SELECT Id FROM EmailTemplate WHERE DeveloperName = 'UrgentOpportunityNotification' LIMIT 1
         ];
-        System.assertNotEquals(null, emailTemplate, 'EmailTemplate must exist in the org for the test.');
+        Assert.isNotNull(emailTemplate, 'EmailTemplate must exist in the org for the test.');
 
         Test.startTest();
         UrgentOpportunityHandler.handleAfterInsert(insertedOpportunities);
         Test.stopTest();
 
         Integer emailInvocations = Limits.getEmailInvocations();
-        System.assertEquals(1, emailInvocations, 'One email should be sent for the urgent opportunity.');
+        Assert.areEqual(1, emailInvocations, 'One email should be sent for the urgent opportunity.');
 
         Opportunity urgentOpportunity = [
             SELECT Id, Name FROM Opportunity WHERE Urgent__c = true LIMIT 1
         ];
-        System.assertNotEquals(null, urgentOpportunity, 'Urgent opportunity should exist.');
+        Assert.isNotNull(urgentOpportunity, 'Urgent opportunity should exist.');
     }
 
     @isTest
@@ -87,9 +88,9 @@ public class UrgentOpportunityHandlerTest {
             List<Opportunity> opportunities = [SELECT Id, Name, Urgent__c FROM Opportunity WHERE Urgent__c = true];
             UrgentOpportunityHandler.handleAfterInsert(opportunities);
 
-            System.assert(false, 'This should have thrown an exception due to missing AccountId.');
+            Assert.fail('This should have thrown an exception due to missing AccountId.');
         } catch (Exception e) {
-            System.assert(e.getMessage().contains('AccountId'), 'Exception should mention missing AccountId.');
+            Assert.isTrue(e.getMessage().contains('AccountId'), 'Exception should mention missing AccountId.');
         }
         Test.stopTest();
     }
@@ -115,11 +116,10 @@ public class UrgentOpportunityHandlerTest {
             }
 
             UrgentOpportunityHandler.handleAfterInsert(insertedOpportunities);
-            System.assert(false, 'This should have thrown an exception during email sending.');
+            Assert.fail('This should have thrown an exception during email sending.');
         } catch (Exception e) {
-            System.assert(e.getMessage().contains('sendEmail'), 'Exception should mention email sending failure.');
+            Assert.isTrue(e.getMessage().contains('sendEmail'), 'Exception should mention email sending failure.');
         }
         Test.stopTest();
     }
-    
 }

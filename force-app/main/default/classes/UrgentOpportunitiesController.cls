@@ -49,13 +49,15 @@ public with sharing class UrgentOpportunitiesController {
 /******************************************************************************************************************
 * @author       : Bianca Ene
 * @date         : 2024-12-11
-* @description  : This method synchronously creates a new urgent opportunity and links it to a specific account.
-* @param        : Id accountId : The ID of the account to which the opportunity is linked.
-* @param        : String name : The name of the opportunity to be created.
-* @param        : String stageName : The stage of the opportunity.
-* @param        : Decimal amount : The amount value of the opportunity.
-* @param        : Date closeDate : The close date of the opportunity.
-* @return       : Opportunity : The newly created opportunity record.
+* @description  : This method synchronously creates a new opportunity marked as urgent and associates it with 
+*                 a specific account. It performs input validation to ensure all required fields are provided 
+*                 and handles exceptions to ensure smooth error reporting.
+* @param        : Id accountId : The ID of the account to which the opportunity will be linked.
+* @param        : String name : The name of the opportunity to be created (required).
+* @param        : String stageName : The stage of the opportunity (required).
+* @param        : Decimal amount : The monetary value of the opportunity (required).
+* @param        : Date closeDate : The expected close date of the opportunity (required).
+* @return       : Boolean : Returns true if the opportunity is successfully created; otherwise, false.
 ******************************************************************************************************************/
 @AuraEnabled
 public static Boolean createOpportunity(Id accountId, String name, String stageName, Decimal amount, Date closeDate) {
@@ -82,10 +84,10 @@ public static Boolean createOpportunity(Id accountId, String name, String stageN
             Urgent__c = true
         );
         insert opp;
-        return true; // Indicate success
+        return true; 
     } catch (Exception ex) {
         ErrorHandler.logException(ex, 'UrgentOpportunitiesController', 'createOpportunity');
-        return false; // Indicate failure
+        return false; 
     }
 }
 
