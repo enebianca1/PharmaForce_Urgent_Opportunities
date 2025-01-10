@@ -38,30 +38,30 @@ public class UrgentOpportunitiesControllerTest {
         List<Opportunity> opportunities = (List<Opportunity>) result.get('opportunities');
         Integer totalCount = (Integer) result.get('totalCount');
 
-        System.assertEquals(3, opportunities.size(), 'Expected 3 urgent opportunities returned.');
-        System.assertEquals(5, totalCount, 'Expected total count of urgent opportunities to be 5.');
-        System.assertEquals('Urgent Opportunity 1', opportunities[0].Name, 'Expected the first opportunity to be sorted by CloseDate ASC.');
+        Assert.areEqual(3, opportunities.size(), 'Expected 3 urgent opportunities returned.');
+        Assert.areEqual(5, totalCount, 'Expected total count of urgent opportunities to be 5.');
+        Assert.areEqual('Urgent Opportunity 1', opportunities[0].Name, 'Expected the first opportunity to be sorted by CloseDate ASC.');
     }
 
     @isTest
     static void testGetUrgentOpportunitiesException() {
-    makeData();
-    Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+        makeData();
+        Account testAccount = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
 
-    Test.startTest();
-    try {
-        UrgentOpportunitiesController.getUrgentOpportunities(
-            'Urgent', 
-            testAccount.Id, 
-            0, 
-            -1 
-        );
-        System.assert(false, 'Expected an exception to be thrown.');
-    } catch (Exception e) {
-        System.assert(true, 'Exception successfully caught.');
+        Test.startTest();
+        try {
+            UrgentOpportunitiesController.getUrgentOpportunities(
+                'Urgent', 
+                testAccount.Id, 
+                0, 
+                -1 
+            );
+            Assert.fail('Expected an exception to be thrown.');
+        } catch (Exception e) {
+            Assert.isTrue(e != null, 'Exception successfully caught.');
+        }
+        Test.stopTest();
     }
-    Test.stopTest();
-  }
 
     @isTest
     static void testCreateOpportunity() {
@@ -78,21 +78,19 @@ public class UrgentOpportunitiesControllerTest {
         );
         Test.stopTest();
     
-        System.assert(isSuccess, 'Expected the opportunity creation to be successful.');
+        Assert.isTrue(isSuccess, 'Expected the opportunity creation to be successful.');
     
         Opportunity insertedOpp = [SELECT Name, StageName, Amount, CloseDate, Urgent__c 
                                    FROM Opportunity 
                                    WHERE Name = 'New Urgent Opportunity' LIMIT 1];
     
-        System.assertEquals('New Urgent Opportunity', insertedOpp.Name, 'Opportunity Name mismatch.');
-        System.assertEquals('Negotiation', insertedOpp.StageName, 'StageName mismatch.');
-        System.assertEquals(5000, insertedOpp.Amount, 'Amount mismatch.');
-        System.assertEquals(Date.today().addDays(10), insertedOpp.CloseDate, 'CloseDate mismatch.');
-        System.assertEquals(true, insertedOpp.Urgent__c, 'Urgent flag mismatch.');
+        Assert.areEqual('New Urgent Opportunity', insertedOpp.Name, 'Opportunity Name mismatch.');
+        Assert.areEqual('Negotiation', insertedOpp.StageName, 'StageName mismatch.');
+        Assert.areEqual(5000, insertedOpp.Amount, 'Amount mismatch.');
+        Assert.areEqual(Date.today().addDays(10), insertedOpp.CloseDate, 'CloseDate mismatch.');
+        Assert.areEqual(true, insertedOpp.Urgent__c, 'Urgent flag mismatch.');
     }
-    
 
-    // Negative Tests Case for createOpportunity (missing required fields)
     @isTest
     static void testCreateOpportunityMissingName() {
         makeData();
@@ -107,10 +105,9 @@ public class UrgentOpportunitiesControllerTest {
                 3000,
                 Date.today()
             );
-            System.assert(false, 'Expected AuraHandledException for missing Name.');
-        } catch (Exception e) {
-            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing Name.');
-            System.assertEquals('Opportunity Name is required.', e.getMessage(), 'Incorrect exception message for missing Name.');
+            Assert.fail('Expected AuraHandledException for missing Name.');
+        } catch (AuraHandledException e) {
+            Assert.areEqual('Opportunity Name is required.', e.getMessage(), 'Incorrect exception message for missing Name.');
         }
         Test.stopTest();
     }
@@ -129,10 +126,9 @@ public class UrgentOpportunitiesControllerTest {
                 3000,
                 Date.today()
             );
-            System.assert(false, 'Expected AuraHandledException for missing StageName.');
-        } catch (Exception e) {
-            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing StageName.');
-            System.assertEquals('Stage Name is required.', e.getMessage(), 'Incorrect exception message for missing StageName.');
+            Assert.fail('Expected AuraHandledException for missing StageName.');
+        } catch (AuraHandledException e) {
+            Assert.areEqual('Stage Name is required.', e.getMessage(), 'Incorrect exception message for missing StageName.');
         }
         Test.stopTest();
     }
@@ -151,10 +147,9 @@ public class UrgentOpportunitiesControllerTest {
                 null, 
                 Date.today()
             );
-            System.assert(false, 'Expected AuraHandledException for missing Amount.');
-        } catch (Exception e) {
-            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing Amount.');
-            System.assertEquals('Amount is required.', e.getMessage(), 'Incorrect exception message for missing Amount.');
+            Assert.fail('Expected AuraHandledException for missing Amount.');
+        } catch (AuraHandledException e) {
+            Assert.areEqual('Amount is required.', e.getMessage(), 'Incorrect exception message for missing Amount.');
         }
         Test.stopTest();
     }
@@ -173,12 +168,10 @@ public class UrgentOpportunitiesControllerTest {
                 3000,
                 null 
             );
-            System.assert(false, 'Expected AuraHandledException for missing CloseDate.');
-        } catch (Exception e) {
-            System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException for missing CloseDate.');
-            System.assertEquals('Close Date is required.', e.getMessage(), 'Incorrect exception message for missing CloseDate.');
+            Assert.fail('Expected AuraHandledException for missing CloseDate.');
+        } catch (AuraHandledException e) {
+            Assert.areEqual('Close Date is required.', e.getMessage(), 'Incorrect exception message for missing CloseDate.');
         }
         Test.stopTest();
     }
-
 }
